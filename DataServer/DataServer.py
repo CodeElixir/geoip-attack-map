@@ -233,7 +233,7 @@ def main():
                         ip_db_clean = clean_db(ip_db_unclean)
 
                         msg_type = {'msg_type': get_msg_type()}
-                        msg_type2 = get_port_service(syslog_data_dict['srcport'],syslog_data_dict['dstport'])
+                        msg_type2 = {'msg_type2': get_port_service(syslog_data_dict['srcport'],syslog_data_dict['dstport'])}
                         msg_type3 = {'msg_type3': cve_attack} # TO DO
 
                         proto = {'protocol': get_tcp_udp_proto(syslog_data_dict['proto'])}
