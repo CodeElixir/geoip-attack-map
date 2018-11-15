@@ -8,11 +8,13 @@ AUTHOR: Matthew May - mcmay.web@gmail.com
 import json
 import maxminddb
 import redis
+import re
+import random
 
 from const import META, PORTMAP
 
 from sys import exit
-from time import localtime, strftime
+from time import localtime, sleep, strftime
 
 # start the Redis server if it isn't started already.
 # $ redis-server
@@ -25,7 +27,7 @@ redis_instance = None
 db_path = '/home/ubuntu/Desktop/geoip-attack-map/DataServerDB/GeoLite2-City.mmdb'
 
 # ip for headquarters
-hq_ip = '8.8.8.8' # Need to add destination IP here
+hq_ip = '8.8.8.8'  # Need to add destination IP here
 
 # stats
 server_start_time = strftime("%d-%m-%Y %H:%M:%S", localtime())  # local time
@@ -66,7 +68,7 @@ def get_msg_type():
 
 
 # Check to see if packet is using an interesting TCP/UDP protocol based on source or destination port
-def get_tcp_udp_proto(src_port, dst_port):
+def get_port_service(src_port, dst_port):
     src_port = int(src_port)
     dst_port = int(dst_port)
 
@@ -76,6 +78,23 @@ def get_tcp_udp_proto(src_port, dst_port):
         return PORTMAP[dst_port]
 
     return "OTHER"
+
+
+def get_tcp_udp_proto(protocol):
+    # check if function input was a integer
+    # and translate if we know translation
+    try:
+        if int(protocol) == 1:
+            return "ICMP"   # icmp has protocol 1
+        elif int(protocol) == 6:
+            return "TCP"    # tcp has protocol 6
+        elif int(protocol) == 17:
+            return "UDP"    # udp has protocol 17
+        else:
+            return int(protocol)
+    # if function input was something else than int
+    except (ValueError, AttributeError, TypeError):
+        return protocol
 
 
 def find_hq_lat_long(hq_ip):
@@ -106,6 +125,18 @@ def parse_maxminddb(db_path, ip):
         exit()
     except ValueError:
         return False
+
+
+def parse_syslog(line):
+    kvdelim = '='  # key and value deliminator
+    logdatadic = {}  # dictionary for logdata
+    # regex matches internal sub strings such as field = "word1 word2" and returns a list
+    logdatalist = re.findall(r'[\w<>]+="?[\w\s\.:-]+"?\s', line)
+    # Convert list into Dictionary as key : value
+    for each in logdatalist:
+        eachlist = each.split(kvdelim)
+        logdatadic[eachlist[0]] = str(eachlist[1])
+    return logdatadic
 
 
 def shutdown_and_report_stats():
@@ -167,7 +198,6 @@ def track_stats(super_dict, tracking_dict, key):
         else:
             unknowns[key] = 1
 
-
 def main():
 
     global db_path, log_file_out, redis_ip, redis_instance, syslog_path, hq_ip
@@ -179,68 +209,70 @@ def main():
     # Find HQ lat/long
     hq_dict = find_hq_lat_long(hq_ip)
 
+    # TO DO
+    cve_attack = 'CVE:{}:{}'.format(
+        random.randrange(1, 2000),
+        random.randrange(100, 1000)
+    )
+
     # # Follow/parse/format/publish syslog data
-    # with io.open(syslog_path, "r", encoding='ISO-8859-1') as syslog_file:
-    #     syslog_file.readlines()
-    #     while True:
-    #         where = syslog_file.tell()
-    #         line = syslog_file.readline()
-    #         if not line:
-    #             sleep(.1)
-    #             syslog_file.seek(where)
-    #         else:
-    #             syslog_data_dict = parse_syslog(line)
-    #             if syslog_data_dict:
-    #                 ip_db_unclean = parse_maxminddb(db_path, syslog_data_dict['src_ip'])
-    #                 if ip_db_unclean:
-    #                     event_count += 1
-    #                     ip_db_clean = clean_db(ip_db_unclean)
-    #
-    #                     msg_type = {'msg_type': get_msg_type()}
-    #                     msg_type2 = {'msg_type2': syslog_data_dict['type_attack']}
-    #                     msg_type3 = {'msg_type3': syslog_data_dict['cve_attack']}
-    #
-    #                     proto = {'protocol': get_tcp_udp_proto(
-    #                         syslog_data_dict['src_port'],
-    #                         syslog_data_dict['dst_port']
-    #                     )}
-    #                     super_dict = merge_dicts(
-    #                         hq_dict,
-    #                         ip_db_clean,
-    #                         msg_type,
-    #                         msg_type2,
-    #                         msg_type3,
-    #                         proto,
-    #                         syslog_data_dict
-    #                     )
-    #
-    #                     # Track Stats
-    #                     track_stats(super_dict, continents_tracked, 'continent')
-    #                     track_stats(super_dict, countries_tracked, 'country')
-    #                     track_stats(super_dict, ips_tracked, 'src_ip')
-    #                     event_time = strftime("%d-%m-%Y %H:%M:%S", localtime())  # local time
-    #                     # event_time = strftime("%Y-%m-%d %H:%M:%S", gmtime()) # UTC time
-    #                     track_flags(super_dict, country_to_code, 'country', 'iso_code')
-    #                     track_flags(super_dict, ip_to_code, 'src_ip', 'iso_code')
-    #
-    #                     # Append stats to super_dict
-    #                     super_dict['event_count'] = event_count
-    #                     super_dict['continents_tracked'] = continents_tracked
-    #                     super_dict['countries_tracked'] = countries_tracked
-    #                     super_dict['ips_tracked'] = ips_tracked
-    #                     super_dict['unknowns'] = unknowns
-    #                     super_dict['event_time'] = event_time
-    #                     super_dict['country_to_code'] = country_to_code
-    #                     super_dict['ip_to_code'] = ip_to_code
-    #
-    #                     json_data = json.dumps(super_dict)
-    #                     redis_instance.publish('attack-map-production', json_data)
-    #
-    #                     print('Event Count: {}'.format(event_count))
-    #                     print('------------------------')
-    #
-    #                 else:
-    #                     continue
+    with io.open(syslog_path, "r", encoding='ISO-8859-1') as syslog_file:
+        syslog_file.readlines()
+        while True:
+            where = syslog_file.tell()
+            line = syslog_file.readline()
+            if not line:
+                sleep(.1)
+                syslog_file.seek(where)
+            else:
+                syslog_data_dict = parse_syslog(line)
+                if syslog_data_dict:
+                    ip_db_unclean = parse_maxminddb(db_path, syslog_data_dict['srcip'])
+                    if ip_db_unclean:
+                        event_count += 1
+                        ip_db_clean = clean_db(ip_db_unclean)
+
+                        msg_type = {'msg_type': get_msg_type()}
+                        msg_type2 = get_port_service(syslog_data_dict['srcport'],syslog_data_dict['dstport'])
+                        msg_type3 = {'msg_type3': cve_attack} # TO DO
+
+                        proto = {'protocol': get_tcp_udp_proto(syslog_data_dict['proto'])}
+                        super_dict = merge_dicts(
+                            hq_dict,
+                            ip_db_clean,
+                            msg_type,
+                            msg_type2,
+                            msg_type3,
+                            proto,
+                            syslog_data_dict
+                        )
+
+                        # Track Stats
+                        track_stats(super_dict, continents_tracked, 'continent')
+                        track_stats(super_dict, countries_tracked, 'country')
+                        track_stats(super_dict, ips_tracked, 'srcip')
+                        event_time = strftime("%d-%m-%Y %H:%M:%S", localtime())  # local time
+                        track_flags(super_dict, country_to_code, 'country', 'iso_code')
+                        track_flags(super_dict, ip_to_code, 'srcip', 'iso_code')
+
+                        # Append stats to super_dict
+                        super_dict['event_count'] = event_count
+                        super_dict['continents_tracked'] = continents_tracked
+                        super_dict['countries_tracked'] = countries_tracked
+                        super_dict['ips_tracked'] = ips_tracked
+                        super_dict['unknowns'] = unknowns
+                        super_dict['event_time'] = event_time
+                        super_dict['country_to_code'] = country_to_code
+                        super_dict['ip_to_code'] = ip_to_code
+
+                        json_data = json.dumps(super_dict)
+                        redis_instance.publish('attack-map-production', json_data)
+
+                        print('Event Count: {}'.format(event_count))
+                        print('------------------------')
+
+                    else:
+                        continue
 
 
 if __name__ == '__main__':
