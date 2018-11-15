@@ -131,7 +131,7 @@ def parse_syslog(line):
     kvdelim = '='  # key and value deliminator
     logdatadic = {}  # dictionary for logdata
     # regex matches internal sub strings such as field = "word1 word2" and returns a list
-    logdatalist = re.findall(r'[\w<>]+="?[\w\s\.:-]+"?\s', line)
+    logdatalist = re.findall(r'(?:[^\s"]|"(?:[^"])*")+', line)
     # Convert list into Dictionary as key : value
     for each in logdatalist:
         eachlist = each.split(kvdelim)
