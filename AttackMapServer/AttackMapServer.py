@@ -106,20 +106,20 @@ class WebSocketChatHandler(tornado.websocket.WebSocketHandler):
             protocol = json_data['protocol']
         else:
             protocol = None
-        if 'src_ip' in json_data:
-            src_ip = json_data['src_ip']
+        if 'srcip' in json_data:
+            src_ip = json_data['srcip']
         else:
             src_ip = None
-        if 'dst_ip' in json_data:
-            dst_ip = json_data['dst_ip']
+        if 'dstip' in json_data:
+            dst_ip = json_data['dstip']
         else:
             dst_ip = None
-        if 'src_port' in json_data:
-            src_port = json_data['src_port']
+        if 'srcport' in json_data:
+            src_port = json_data['srcport']
         else:
             src_port = None
-        if 'dst_port' in json_data:
-            dst_port = json_data['dst_port']
+        if 'dstport' in json_data:
+            dst_port = json_data['dstport']
         else:
             dst_port = None
         if 'latitude' in json_data:
