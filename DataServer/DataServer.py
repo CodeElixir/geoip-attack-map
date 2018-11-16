@@ -10,11 +10,14 @@ import maxminddb
 import redis
 import re
 import random
+import io
 
 from const import META, PORTMAP
-
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from sys import exit
 from time import localtime, sleep, strftime
+from os import getuid
+from sys import exit
 
 # start the Redis server if it isn't started already.
 # $ redis-server
@@ -24,6 +27,8 @@ from time import localtime, sleep, strftime
 redis_ip = '127.0.0.1'
 redis_instance = None
 
+# required input paths
+syslog_path = '/var/log/syslog'
 db_path = '/home/ubuntu/Desktop/geoip-attack-map/DataServerDB/GeoLite2-City.mmdb'
 
 # ip for headquarters
@@ -131,11 +136,10 @@ def parse_syslog(line):
     kvdelim = '='  # key and value deliminator
     logdatadic = {}  # dictionary for logdata
     # regex matches internal sub strings such as field = "word1 word2" and returns a list
-    logdatalist = re.findall(r'(?:[^\s"]|"(?:[^"])*")+', line)
-    # Convert list into Dictionary as key : value
-    for each in logdatalist:
-        eachlist = each.split(kvdelim)
-        logdatadic[eachlist[0]] = str(eachlist[1])
+    for field in re.findall(r'(?:[^\s"]|"(?:[^"])*")+', line):
+        if kvdelim in field:
+            key, value = field.split(kvdelim)
+            logdatadic[key] = value
     return logdatadic
 
 
