@@ -162,8 +162,8 @@ class WebSocketChatHandler(tornado.websocket.WebSocketHandler):
             postal_code = json_data['postal_code']
         else:
             postal_code = None
-        if protocol:
-            color = service_rgb[protocol]
+        if msg_type2:
+            color = service_rgb[msg_type2]
         else:
             color = '#000000'
         if 'event_count' in json_data:
@@ -229,7 +229,6 @@ class WebSocketChatHandler(tornado.websocket.WebSocketHandler):
                         'country_to_code': country_to_code,
                         'ip_to_code': ip_to_code,
                         }
-
 
         self.write_message(json.dumps(msg_to_send))
 
