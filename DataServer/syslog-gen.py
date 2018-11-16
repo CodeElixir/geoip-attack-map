@@ -3,12 +3,15 @@
 import random, syslog
 from sys import exit
 from time import sleep
+from const import PORTMAP
 
 
 def main():
 
     port_list = []
-    
+    for port in PORTMAP:
+        port_list.append(port)
+
     while True:
         port = random.choice(port_list)
 
@@ -25,7 +28,7 @@ def main():
                    port
                    )
         syslog.syslog(rand_log)
-        #print(rand_log)
+        print(rand_log)
         sleep(1)
 
 
