@@ -28,7 +28,7 @@ redis_ip = '127.0.0.1'
 redis_instance = None
 
 # required input paths
-syslog_path = '/var/log/syslog'
+syslog_path = '/var/log/fortigate.log'
 db_path = '/home/ubuntu/Desktop/geoip-attack-map/DataServerDB/GeoLite2-City.mmdb'
 
 # ip for headquarters
@@ -231,52 +231,54 @@ def main():
             else:
                 syslog_data_dict = parse_syslog(line)
                 if syslog_data_dict:
-                    ip_db_unclean = parse_maxminddb(db_path, syslog_data_dict['srcip'])
-                    if ip_db_unclean:
-                        event_count += 1
-                        ip_db_clean = clean_db(ip_db_unclean)
+                    if syslog_data_dict['type'] == 'traffic':
+                        ip_db_unclean = parse_maxminddb(db_path, syslog_data_dict['srcip'])
+                        if ip_db_unclean:
+                            event_count += 1
+                            ip_db_clean = clean_db(ip_db_unclean)
 
-                        msg_type = {'msg_type': get_msg_type()}
-                        msg_type2 = {'msg_type2': get_port_service(syslog_data_dict['srcport'],syslog_data_dict['dstport'])}
-                        msg_type3 = {'msg_type3': cve_attack} # TO DO
+                            msg_type = {'msg_type': get_msg_type()}
+                            msg_type2 = {
+                                'msg_type2': get_port_service(syslog_data_dict['srcport'], syslog_data_dict['dstport'])}
+                            msg_type3 = {'msg_type3': cve_attack}  # TO DO
 
-                        proto = {'protocol': get_tcp_udp_proto(syslog_data_dict['proto'])}
-                        super_dict = merge_dicts(
-                            hq_dict,
-                            ip_db_clean,
-                            msg_type,
-                            msg_type2,
-                            msg_type3,
-                            proto,
-                            syslog_data_dict
-                        )
+                            proto = {'protocol': get_tcp_udp_proto(syslog_data_dict['proto'])}
+                            super_dict = merge_dicts(
+                                hq_dict,
+                                ip_db_clean,
+                                msg_type,
+                                msg_type2,
+                                msg_type3,
+                                proto,
+                                syslog_data_dict
+                            )
+                            # Track Stats
+                            track_stats(super_dict, continents_tracked, 'continent')
+                            track_stats(super_dict, countries_tracked, 'country')
+                            track_stats(super_dict, ips_tracked, 'srcip')
+                            event_time = strftime("%d-%m-%Y %H:%M:%S", localtime())  # local time
+                            track_flags(super_dict, country_to_code, 'country', 'iso_code')
+                            track_flags(super_dict, ip_to_code, 'srcip', 'iso_code')
 
-                        # Track Stats
-                        track_stats(super_dict, continents_tracked, 'continent')
-                        track_stats(super_dict, countries_tracked, 'country')
-                        track_stats(super_dict, ips_tracked, 'srcip')
-                        event_time = strftime("%d-%m-%Y %H:%M:%S", localtime())  # local time
-                        track_flags(super_dict, country_to_code, 'country', 'iso_code')
-                        track_flags(super_dict, ip_to_code, 'srcip', 'iso_code')
+                            # Append stats to super_dict
+                            super_dict['event_count'] = event_count
+                            super_dict['continents_tracked'] = continents_tracked
+                            super_dict['countries_tracked'] = countries_tracked
+                            super_dict['ips_tracked'] = ips_tracked
+                            super_dict['unknowns'] = unknowns
+                            super_dict['event_time'] = event_time
+                            super_dict['country_to_code'] = country_to_code
+                            super_dict['ip_to_code'] = ip_to_code
 
-                        # Append stats to super_dict
-                        super_dict['event_count'] = event_count
-                        super_dict['continents_tracked'] = continents_tracked
-                        super_dict['countries_tracked'] = countries_tracked
-                        super_dict['ips_tracked'] = ips_tracked
-                        super_dict['unknowns'] = unknowns
-                        super_dict['event_time'] = event_time
-                        super_dict['country_to_code'] = country_to_code
-                        super_dict['ip_to_code'] = ip_to_code
+                            json_data = json.dumps(super_dict)
+                            redis_instance.publish('attack-map-production', json_data)
 
-                        json_data = json.dumps(super_dict)
-                        redis_instance.publish('attack-map-production', json_data)
+                            print('Event Count: {}'.format(event_count))
+                            print('------------------------')
 
-                        print('Event Count: {}'.format(event_count))
-                        print('------------------------')
+                        else:
+                            continue
 
-                    else:
-                        continue
 
 
 if __name__ == '__main__':
