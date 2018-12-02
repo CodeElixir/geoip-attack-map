@@ -291,13 +291,13 @@ function prependCVERow(id, args) {
         // Exploit
         var textNode = document.createTextNode(args[1]);
 
-        var alink = document.createElement('a');
-        alink.setAttribute("href",args[1]);
-        alink.setAttribute("target","_blank")
-        alink.style.color = "white";
-        alink.appendChild(textNode);
+        // var alink = document.createElement('a');
+        // alink.setAttribute("href",args[1]);
+        // alink.setAttribute("target","_blank")
+        // alink.style.color = "white";
+        // alink.appendChild(textNode);
 
-        td2.appendChild(alink);
+        td2.appendChild(textNode);
         tr.appendChild(td2);
 
         // Flag
@@ -430,7 +430,7 @@ function handleLegend(msg) {
 function handleLegendType(msg) {
     var attackType = [msg.type2];
     var attackCve = [msg.event_time,
-             msg.type3,
+             msg.action1,
              msg.iso_code,
              msg.src_ip,
              //msg.country,

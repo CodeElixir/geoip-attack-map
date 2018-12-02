@@ -89,7 +89,6 @@ class WebSocketChatHandler(tornado.websocket.WebSocketHandler):
             json_data = json.loads(msg.body)
         except Exception as ex:
             return None
-
         if 'msg_type' in json_data:
             msg_type = json_data['msg_type']
         else:
@@ -122,6 +121,10 @@ class WebSocketChatHandler(tornado.websocket.WebSocketHandler):
             dst_port = json_data['dstport']
         else:
             dst_port = None
+        if 'action' in json_data:
+            action = json_data['action']
+        else:
+            action = None
         if 'latitude' in json_data:
             src_lat = json_data['latitude']
         else:
@@ -208,6 +211,7 @@ class WebSocketChatHandler(tornado.websocket.WebSocketHandler):
                         'dst_ip': dst_ip,
                         'src_port': src_port,
                         'dst_port': dst_port,
+                        'action1': action,
                         'src_lat': src_lat,
                         'src_long': src_long,
                         'dst_lat': dst_lat,
@@ -229,7 +233,6 @@ class WebSocketChatHandler(tornado.websocket.WebSocketHandler):
                         'country_to_code': country_to_code,
                         'ip_to_code': ip_to_code,
                         }
-
         self.write_message(json.dumps(msg_to_send))
 
 def main():

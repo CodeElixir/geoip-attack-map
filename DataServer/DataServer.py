@@ -32,7 +32,7 @@ syslog_path = '/var/log/fortigate.log'
 db_path = '/home/ubuntu/Desktop/geoip-attack-map/DataServerDB/GeoLite2-City.mmdb'
 
 # ip for headquarters
-hq_ip = '8.8.8.8'  # Need to add destination IP here
+hq_ip = '43.242.126.138'  # Need to add destination IP here
 
 # stats
 server_start_time = strftime("%d-%m-%Y %H:%M:%S", localtime())  # local time
@@ -218,8 +218,8 @@ def main():
         random.randrange(1, 2000),
         random.randrange(100, 1000)
     )
-
-    # # Follow/parse/format/publish syslog data
+ 
+   # # Follow/parse/format/publish syslog data
     with io.open(syslog_path, "r", encoding='ISO-8859-1') as syslog_file:
         syslog_file.readlines()
         while True:
@@ -241,7 +241,6 @@ def main():
                             msg_type2 = {
                                 'msg_type2': get_port_service(syslog_data_dict['srcport'], syslog_data_dict['dstport'])}
                             msg_type3 = {'msg_type3': cve_attack}  # TO DO
-
                             proto = {'protocol': get_tcp_udp_proto(syslog_data_dict['proto'])}
                             super_dict = merge_dicts(
                                 hq_dict,
