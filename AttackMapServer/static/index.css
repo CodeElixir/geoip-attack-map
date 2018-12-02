@@ -6,7 +6,6 @@
         width:100%;
         margin:0;
         padding:0;
-        font-size: 12px;
     }
 
     #map {
@@ -88,7 +87,6 @@
         height:100%;
         overflow-y:scroll;
         overflow-x:auto;
-        width: 12.333333%;
     }
 
     .col-md-2 {
@@ -100,7 +98,6 @@
         height:100%;
         overflow-y:scroll;
         overflow-x:auto;
-        width: 54.333333%;
     }
 	
     .col-md-8 {
@@ -110,7 +107,7 @@
     }
 
     .col-md-4 {
-        height:117px;
+        height:154px;
         overflow-y:scroll;
         overflow-x:auto;
     }
