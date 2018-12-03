@@ -29,7 +29,7 @@ redis_instance = None
 
 # required input paths
 syslog_path = '/var/log/fortigate.log'
-db_path = '/home/ubuntu/Desktop/geoip-attack-map/DataServerDB/GeoLite2-City.mmdb'
+db_path = '/home/ubuntu/Desktop/Work_dir/geoip-attack-map/DataServerDB/GeoLite2-City.mmdb'
 
 # ip for headquarters
 hq_ip = '43.242.126.138'  # Need to add destination IP here
@@ -73,7 +73,7 @@ def get_msg_type():
 
 
 # Check to see if packet is using an interesting TCP/UDP protocol based on source or destination port
-def get_port_service(src_port, dst_port):
+def get_port_service(src_port, dst_port, service):
     src_port = int(src_port)
     dst_port = int(dst_port)
 
@@ -82,7 +82,7 @@ def get_port_service(src_port, dst_port):
     if dst_port in PORTMAP:
         return PORTMAP[dst_port]
 
-    return "OTHER"
+    return service
 
 
 def get_tcp_udp_proto(protocol):
@@ -137,9 +137,12 @@ def parse_syslog(line):
     logdatadic = {}  # dictionary for logdata
     # regex matches internal sub strings such as field = "word1 word2" and returns a list
     for field in re.findall(r'(?:[^\s"]|"(?:[^"])*")+', line):
-        if kvdelim in field:
-            key, value = field.split(kvdelim)
-            logdatadic[key] = value
+        try:
+            if kvdelim in field:
+                key, value = field.split(kvdelim)
+                logdatadic[key] = value
+        except:
+            continue
     return logdatadic
 
 
@@ -239,7 +242,7 @@ def main():
 
                             msg_type = {'msg_type': get_msg_type()}
                             msg_type2 = {
-                                'msg_type2': get_port_service(syslog_data_dict['srcport'], syslog_data_dict['dstport'])}
+                                'msg_type2': get_port_service(syslog_data_dict['srcport'], syslog_data_dict['dstport'], syslog_data_dict['service'])}
                             msg_type3 = {'msg_type3': cve_attack}  # TO DO
                             proto = {'protocol': get_tcp_udp_proto(syslog_data_dict['proto'])}
                             super_dict = merge_dicts(
