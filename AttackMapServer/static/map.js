@@ -271,7 +271,7 @@ function prependTypeRow(id, args) {
     element.insertBefore(tr, element.firstChild);
 }
 
-function prependCVERow(id, args) {
+function prependEventRow(id, args) {
     var tr = document.createElement('tr');
 
     //count = args.length;
@@ -288,7 +288,7 @@ function prependCVERow(id, args) {
         td1.appendChild(textNode2);
         tr.appendChild(td1);
 
-        // Exploit
+        // Event
         var textNode = document.createTextNode(args[1]);
 
         // var alink = document.createElement('a');
@@ -429,7 +429,7 @@ function handleLegend(msg) {
 
 function handleLegendType(msg) {
     var attackType = [msg.type2];
-    var attackCve = [msg.event_time,
+    var attackEvent = [msg.event_time,
              msg.action1,
              msg.iso_code,
              msg.src_ip,
@@ -442,8 +442,8 @@ function handleLegendType(msg) {
         prependTypeRow('attack-type', attackType);
     }
 
-    if (attackCve[1] != "___"){                
-        prependCVERow('attack-cveresp', attackCve);
+    if (attackEvent[1] != "___"){                
+        prependEventRow('attack-event', attackEvent);
     }
 }
 

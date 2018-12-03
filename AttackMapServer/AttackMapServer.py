@@ -33,9 +33,9 @@ service_rgb = {
                 'SMB':'#bf00ff',
                 'AUTH':'#ff00ff',
                 'RDP':'#ff0060',
-                'DoS':'#ff0000',
+                'DoS':'#ffccff',
                 'ICMP':'#ffcccc',
-                'OTHER':'#6600cc'
+                'OTHER':'#ffffff'
                 }
 
 
@@ -166,7 +166,10 @@ class WebSocketChatHandler(tornado.websocket.WebSocketHandler):
         else:
             postal_code = None
         if msg_type2:
-            color = service_rgb[msg_type2]
+            if msg_type2 not in service_rgb:
+                color = '#ffffff'
+            else:
+                color = service_rgb[msg_type2]
         else:
             color = '#000000'
         if 'event_count' in json_data:
